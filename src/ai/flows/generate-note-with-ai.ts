@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview This file defines a Genkit flow for generating note content based on a user request using AI.
+ * @fileOverview This file defines a Genkit flow for generating note content and a title based on a user request using AI.
  *
- * - generateNoteWithAI - A function that takes a user request and returns generated content.
+ * - generateNoteWithAI - A function that takes a user request and returns generated content and a title.
  * - GenerateNoteWithAIInput - The input type for the generateNoteWithAI function.
  * - GenerateNoteWithAIOutput - The return type for the generateNoteWithAI function.
  */
@@ -16,6 +16,7 @@ const GenerateNoteWithAIInputSchema = z.object({
 export type GenerateNoteWithAIInput = z.infer<typeof GenerateNoteWithAIInputSchema>;
 
 const GenerateNoteWithAIOutputSchema = z.object({
+  title: z.string().describe('The AI-generated title for the note.'),
   generatedContent: z.string().describe('The AI-generated content of the note.'),
 });
 export type GenerateNoteWithAIOutput = z.infer<typeof GenerateNoteWithAIOutputSchema>;
@@ -28,7 +29,7 @@ const generateNoteWithAIPrompt = ai.definePrompt({
   name: 'generateNoteWithAIPrompt',
   input: {schema: GenerateNoteWithAIInputSchema},
   output: {schema: GenerateNoteWithAIOutputSchema},
-  prompt: `Sei un assistente AI. Il tuo compito è scrivere una nota basata sulla richiesta dell'utente. La nota deve essere ben strutturata, scritta in italiano e facile da leggere.
+  prompt: `Sei un assistente AI. Il tuo compito è scrivere una nota basata sulla richiesta dell'utente e generare un titolo appropriato per essa. La nota deve essere ben strutturata, scritta in italiano e facile da leggere. Il titolo dovrebbe riassumere l'argomento della nota.
 
 Richiesta dell'utente: {{{request}}}`,
 });
@@ -41,6 +42,6 @@ const generateNoteWithAIFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await generateNoteWithAIPrompt(input);
-    return { generatedContent: output!.generatedContent };
+    return output!;
   }
 );

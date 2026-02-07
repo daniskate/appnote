@@ -79,6 +79,9 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
     setIsGenerating(true);
     try {
       const result = await generateNoteWithAI({ request: content });
+      if (result.title) {
+        setTitle(result.title);
+      }
       if (result.generatedContent) {
         setContent(result.generatedContent);
       }
