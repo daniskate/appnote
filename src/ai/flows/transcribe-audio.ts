@@ -37,10 +37,7 @@ const transcribeAudioFlow = ai.defineFlow(
     outputSchema: TranscribeAudioOutputSchema,
   },
   async ({ audioDataUri }) => {
-    const model = ai.getModel('googleai/gemini-2.5-flash');
-
     const result = await ai.generate({
-      model: model,
       prompt: [
         { media: { url: audioDataUri } },
         { text: transcribeAudioPrompt },
