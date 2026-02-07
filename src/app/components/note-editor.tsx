@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Mic, Square } from 'lucide-react';
+import { Loader2, Mic, Square, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +32,7 @@ interface NoteEditorProps {
 export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
   const [title, setTitle] = React.useState(note.title);
   const [content, setContent] = React.useState(note.content);
+  const [aiPrompt, setAiPrompt] = React.useState('');
   const [isFormatting, setIsFormatting] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [isRecording, setIsRecording] = React.useState(false);
@@ -74,17 +75,18 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
       setIsFormatting(false);
     }
   };
-
-  const handleGenerateNoteWithAI = async () => {
+  
+  const handleAskGemini = async () => {
     setIsGenerating(true);
     try {
-      const result = await generateNoteWithAI({ request: content });
+      const result = await generateNoteWithAI({ request: aiPrompt });
       if (result.title) {
         setTitle(result.title);
       }
       if (result.generatedContent) {
         setContent(result.generatedContent);
       }
+      setAiPrompt('');
     } catch (error) {
       console.error('Failed to generate note with AI:', error);
       toast({
@@ -95,6 +97,12 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleAskGeminiSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aiPrompt.trim() || isGenerating) return;
+    handleAskGemini();
   };
 
   const handleToggleRecording = () => {
@@ -186,28 +194,32 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
     }
   };
 
-  const isAiBusy = isFormatting || isGenerating;
-  const isBusy = isAiBusy || isTranscribing;
+  const isAiFormatting = isFormatting;
+  const isAiGenerating = isGenerating;
+  const isBusy = isAiFormatting || isAiGenerating || isTranscribing;
 
   return (
     <TooltipProvider>
-      <div className="relative flex h-full flex-col">
-        <div className="flex flex-1 flex-col gap-4">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Titolo della nota"
-            className="border-none bg-transparent text-3xl font-bold h-auto p-0 focus-visible:ring-0 focus-visible:ring-offset-0 tracking-tight"
-          />
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Inizia a scrivere la tua nota qui..."
-            className="h-full flex-1 resize-none border-none bg-transparent p-0 leading-7 focus-visible:ring-0 focus-visible:ring-offset-0"
-            autoFocus
-          />
+      <div className="flex h-full flex-col">
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-4">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Titolo della nota"
+              className="border-none bg-transparent text-3xl font-bold h-auto p-0 focus-visible:ring-0 focus-visible:ring-offset-0 tracking-tight"
+            />
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Inizia a scrivere la tua nota qui..."
+              className="min-h-[calc(100vh-250px)] flex-1 resize-none border-none bg-transparent p-0 leading-7 focus-visible:ring-0 focus-visible:ring-offset-0"
+              autoFocus
+            />
+          </div>
         </div>
-        <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
+
+        <div className="absolute bottom-[6.5rem] right-6 z-10 flex flex-col gap-3">
           <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -217,7 +229,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                     size="icon"
                     className="rounded-full h-12 w-12 shadow-lg"
                   >
-                    {isAiBusy ? (
+                    {isAiFormatting ? (
                       <Loader2 className="animate-spin h-5 w-5" />
                     ) : (
                       <GeminiIcon className="h-5 w-5" />
@@ -227,15 +239,12 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Azioni AI</p>
+                <p>Formatta con AI</p>
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleFormatWithAI}>
+              <DropdownMenuItem onClick={handleFormatWithAI} disabled={isAiFormatting}>
                 Formatta nota
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleGenerateNoteWithAI}>
-                Genera nota da richiesta
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -243,7 +252,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
             <TooltipTrigger asChild>
               <Button
                 onClick={handleToggleRecording}
-                disabled={isAiBusy}
+                disabled={isAiFormatting || isAiGenerating}
                 variant={isRecording ? 'destructive' : 'default'}
                 size="icon"
                 className="rounded-full h-12 w-12 shadow-lg"
@@ -268,6 +277,35 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
               <p>{isRecording ? 'Ferma registrazione' : 'Registra Audio'}</p>
             </TooltipContent>
           </Tooltip>
+        </div>
+        
+        <div className="flex-shrink-0 border-t bg-background p-4">
+          <form onSubmit={handleAskGeminiSubmit}>
+            <div className="relative">
+              <Input
+                id="ai-prompt"
+                placeholder="Chiedi a Gemini..."
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                className="pr-12"
+                disabled={isAiGenerating}
+              />
+              <Button
+                type="submit"
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                disabled={isAiGenerating || !aiPrompt}
+                aria-label="Invia richiesta a Gemini"
+              >
+                {isAiGenerating ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+          </form>
         </div>
       </div>
     </TooltipProvider>
