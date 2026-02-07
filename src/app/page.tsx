@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { it } from 'date-fns/locale';
 
 export default function Home() {
   const [notes, setNotes] = React.useState<Note[]>(initialNotes);
@@ -42,7 +43,7 @@ export default function Home() {
   const handleCreateNote = () => {
     const newNote: Note = {
       id: crypto.randomUUID(),
-      title: 'New Note',
+      title: 'Nuova Nota',
       content: '',
       createdAt: new Date().toISOString(),
     };
@@ -88,7 +89,7 @@ export default function Home() {
             className="h-8 w-8"
           >
             <ArrowLeft />
-            <span className="sr-only">Back to notes</span>
+            <span className="sr-only">Torna alle note</span>
           </Button>
           <h1 className="truncate text-xl font-semibold">
             {selectedNote.title}
@@ -111,7 +112,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold tracking-tight">SmartNotes</h1>
         <Button onClick={handleCreateNote}>
           <Plus className="mr-2" />
-          <span>New Note</span>
+          <span>Nuova Nota</span>
         </Button>
       </div>
 
@@ -136,16 +137,18 @@ export default function Home() {
                     }}
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete note</span>
+                    <span className="sr-only">Elimina nota</span>
                   </Button>
                 </CardTitle>
                 <CardDescription>
-                  {format(new Date(note.createdAt), 'MMM d, yyyy')}
+                  {format(new Date(note.createdAt), 'd MMM yyyy', {
+                    locale: it,
+                  })}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="line-clamp-4 text-sm text-muted-foreground">
-                  {note.content || 'No content...'}
+                  {note.content || 'Nessun contenuto...'}
                 </p>
               </CardContent>
             </Card>
@@ -154,9 +157,9 @@ export default function Home() {
       ) : (
         <div className="flex h-[50vh] flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card">
           <FileText size={48} className="text-muted-foreground" />
-          <h2 className="mt-4 text-2xl font-semibold">No notes yet</h2>
+          <h2 className="mt-4 text-2xl font-semibold">Nessuna nota ancora</h2>
           <p className="mt-2 text-center text-muted-foreground">
-            Create a new note to get started.
+            Crea una nuova nota per iniziare.
           </p>
         </div>
       )}
@@ -167,15 +170,15 @@ export default function Home() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Sei sicuro?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              note.
+              Questa azione non può essere annullata. La nota verrà eliminata
+              in modo permanente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setNoteToDeleteId(null)}>
-              Cancel
+              Annulla
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
@@ -184,7 +187,7 @@ export default function Home() {
                 }
               }}
             >
-              Delete
+              Elimina
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { Note } from '@/app/types';
 import { formatNoteWithAI } from '@/ai/flows/format-note-with-ai';
+import { generateNoteWithAI } from '@/ai/flows/generate-note-with-ai';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -16,6 +17,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { GeminiIcon } from '@/app/components/icons';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface NoteEditorProps {
   note: Note;
@@ -26,6 +33,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
   const [title, setTitle] = React.useState(note.title);
   const [content, setContent] = React.useState(note.content);
   const [isFormatting, setIsFormatting] = React.useState(false);
+  const [isGenerating, setIsGenerating] = React.useState(false);
   const [isRecording, setIsRecording] = React.useState(false);
   const [isTranscribing, setIsTranscribing] = React.useState(false);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
@@ -59,11 +67,30 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
       console.error('Failed to format note with AI:', error);
       toast({
         variant: 'destructive',
-        title: 'Formatting Failed',
-        description: 'Could not format the note content. Please try again.',
+        title: 'Formattazione Fallita',
+        description: 'Impossibile formattare il contenuto della nota. Riprova.',
       });
     } finally {
       setIsFormatting(false);
+    }
+  };
+
+  const handleGenerateNoteWithAI = async () => {
+    setIsGenerating(true);
+    try {
+      const result = await generateNoteWithAI({ request: content });
+      if (result.generatedContent) {
+        setContent(result.generatedContent);
+      }
+    } catch (error) {
+      console.error('Failed to generate note with AI:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Generazione Fallita',
+        description: 'Impossibile generare il contenuto della nota. Riprova.',
+      });
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -96,8 +123,8 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
             if (!base64Audio) {
               toast({
                 variant: 'destructive',
-                title: 'Transcription Failed',
-                description: 'Could not read audio data.',
+                title: 'Trascrizione Fallita',
+                description: 'Impossibile leggere i dati audio.',
               });
               return;
             }
@@ -112,16 +139,16 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
               } else {
                 toast({
                   variant: 'default',
-                  title: 'Transcription Complete',
-                  description: 'The audio was transcribed, but the result was empty.',
+                  title: 'Trascrizione Completata',
+                  description: 'L\'audio è stato trascritto, ma il risultato era vuoto.',
                 });
               }
             } catch (error) {
               console.error('Failed to transcribe audio:', error);
               toast({
                 variant: 'destructive',
-                title: 'Transcription Failed',
-                description: 'Could not transcribe the audio. Please try again.',
+                title: 'Trascrizione Fallita',
+                description: 'Impossibile trascrivere l\'audio. Riprova.',
               });
             } finally {
               setIsTranscribing(false);
@@ -136,15 +163,15 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
         console.error('Failed to start recording:', err);
         toast({
           variant: 'destructive',
-          title: 'Recording Failed',
-          description: 'Could not access the microphone. Please check your permissions.',
+          title: 'Registrazione Fallita',
+          description: 'Impossibile accedere al microfono. Controlla le autorizzazioni.',
         });
       }
     } else {
       toast({
         variant: 'destructive',
-        title: 'Unsupported Browser',
-        description: 'Your browser does not support audio recording.',
+        title: 'Browser non supportato',
+        description: 'Il tuo browser non supporta la registrazione audio.',
       });
     }
   };
@@ -155,8 +182,9 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
       setIsRecording(false);
     }
   };
-  
-  const isBusy = isFormatting || isTranscribing;
+
+  const isAiBusy = isFormatting || isGenerating;
+  const isBusy = isAiBusy || isTranscribing;
 
   return (
     <TooltipProvider>
@@ -165,43 +193,54 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Note title"
+            placeholder="Titolo della nota"
             className="border-none bg-transparent text-3xl font-bold h-auto p-0 focus-visible:ring-0 focus-visible:ring-offset-0 tracking-tight"
           />
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Start writing your note here..."
+            placeholder="Inizia a scrivere la tua nota qui..."
             className="h-full flex-1 resize-none border-none bg-transparent p-0 leading-7 focus-visible:ring-0 focus-visible:ring-offset-0"
             autoFocus
           />
         </div>
         <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleFormatWithAI}
-                disabled={isBusy || !content}
-                size="icon"
-                className="rounded-full h-12 w-12 shadow-lg"
-              >
-                {isFormatting ? (
-                  <Loader2 className="animate-spin h-5 w-5" />
-                ) : (
-                  <GeminiIcon className="h-5 w-5" />
-                )}
-                <span className="sr-only">Format with AI</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Format with AI</p>
-            </TooltipContent>
-          </Tooltip>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    disabled={isBusy || !content}
+                    size="icon"
+                    className="rounded-full h-12 w-12 shadow-lg"
+                  >
+                    {isAiBusy ? (
+                      <Loader2 className="animate-spin h-5 w-5" />
+                    ) : (
+                      <GeminiIcon className="h-5 w-5" />
+                    )}
+                    <span className="sr-only">Azioni AI</span>
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Azioni AI</p>
+              </TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleFormatWithAI}>
+                Formatta nota
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleGenerateNoteWithAI}>
+                Genera nota da richiesta
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 onClick={handleToggleRecording}
-                disabled={isFormatting}
+                disabled={isAiBusy}
                 variant={isRecording ? 'destructive' : 'default'}
                 size="icon"
                 className="rounded-full h-12 w-12 shadow-lg"
@@ -215,15 +254,15 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                 )}
                 <span className="sr-only">
                   {isTranscribing
-                    ? 'Transcribing...'
+                    ? 'Trascrizione in corso...'
                     : isRecording
-                    ? 'Stop Recording'
-                    : 'Start Recording'}
+                    ? 'Ferma registrazione'
+                    : 'Avvia registrazione'}
                 </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{isRecording ? 'Stop Recording' : 'Record Audio'}</p>
+              <p>{isRecording ? 'Ferma registrazione' : 'Registra Audio'}</p>
             </TooltipContent>
           </Tooltip>
         </div>

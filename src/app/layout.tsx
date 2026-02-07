@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'SmartNotes',
-  description: 'An intelligent note-taking app to capture and format your ideas.',
+  description: 'Un\'app intelligente per prendere appunti, per catturare e formattare le tue idee.',
 };
 
 export default function RootLayout({
