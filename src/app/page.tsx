@@ -18,7 +18,6 @@ import { initialNotes } from '@/app/data';
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -121,7 +120,7 @@ export default function Home() {
           {sortedNotes.map((note) => (
             <Card
               key={note.id}
-              className="flex cursor-pointer flex-col transition-shadow hover:shadow-lg"
+              className="cursor-pointer transition-shadow shadow-md hover:shadow-lg"
               onClick={() => handleSelectNote(note)}
             >
               <CardHeader>
@@ -146,11 +145,6 @@ export default function Home() {
                   })}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1">
-                <p className="line-clamp-4 text-sm text-muted-foreground">
-                  {note.content || 'Nessun contenuto...'}
-                </p>
-              </CardContent>
             </Card>
           ))}
         </div>
