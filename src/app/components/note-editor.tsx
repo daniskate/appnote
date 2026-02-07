@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Mic, Sparkles, Square } from 'lucide-react';
+import { Loader2, Mic, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { GeminiIcon } from '@/app/components/icons';
 
 interface NoteEditorProps {
   note: Note;
@@ -187,7 +188,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                 {isFormatting ? (
                   <Loader2 className="animate-spin h-5 w-5" />
                 ) : (
-                  <Sparkles className="text-accent-foreground h-5 w-5" />
+                  <GeminiIcon className="h-5 w-5" />
                 )}
                 <span className="sr-only">Format with AI</span>
               </Button>

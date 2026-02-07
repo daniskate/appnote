@@ -18,3 +18,16 @@ export const Logo = (props: SVGProps<SVGSVGElement>) => (
     <path d="M15.5 11.5a1 1 0 0 0 1-1v0a1 1 0 0 0-1-1v0a1 1 0 0 0-1 1v0a1 1 0 0 0 1 1Z" />
   </svg>
 );
+
+export const GeminiIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M12 5.5L13.89 10.11L18.5 12L13.89 13.89L12 18.5L10.11 13.89L5.5 12L10.11 10.11L12 5.5Z" />
+  </svg>
+);
