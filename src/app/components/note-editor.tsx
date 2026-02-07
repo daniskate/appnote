@@ -9,6 +9,7 @@ import type { Note } from '@/app/types';
 import { formatNoteWithAI } from '@/ai/flows/format-note-with-ai';
 import { generateNoteWithAI } from '@/ai/flows/generate-note-with-ai';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
+import { summarizeNoteWithAI } from '@/ai/flows/summarize-note-with-ai';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -35,6 +36,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
   const [aiPrompt, setAiPrompt] = React.useState('');
   const [isFormatting, setIsFormatting] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [isSummarizing, setIsSummarizing] = React.useState(false);
   const [isRecording, setIsRecording] = React.useState(false);
   const [isTranscribing, setIsTranscribing] = React.useState(false);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
@@ -73,6 +75,25 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
       });
     } finally {
       setIsFormatting(false);
+    }
+  };
+
+  const handleSummarizeWithAI = async () => {
+    setIsSummarizing(true);
+    try {
+      const result = await summarizeNoteWithAI({ content });
+      if (result.summarizedContent) {
+        setContent(result.summarizedContent);
+      }
+    } catch (error) {
+      console.error('Failed to summarize note with AI:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Riassunto Fallito',
+        description: 'Impossibile riassumere il contenuto della nota. Riprova.',
+      });
+    } finally {
+      setIsSummarizing(false);
     }
   };
   
@@ -195,8 +216,9 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
   };
 
   const isAiFormatting = isFormatting;
+  const isAiSummarizing = isSummarizing;
   const isAiGenerating = isGenerating;
-  const isBusy = isAiFormatting || isAiGenerating || isTranscribing;
+  const isBusy = isAiFormatting || isAiGenerating || isTranscribing || isAiSummarizing;
 
   return (
     <TooltipProvider>
@@ -229,7 +251,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                     size="icon"
                     className="rounded-full h-12 w-12 shadow-lg"
                   >
-                    {isAiFormatting ? (
+                    {isAiFormatting || isAiSummarizing ? (
                       <Loader2 className="animate-spin h-5 w-5" />
                     ) : (
                       <GeminiIcon className="h-5 w-5" />
@@ -239,12 +261,15 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Formatta con AI</p>
+                <p>Azioni AI</p>
               </TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleFormatWithAI} disabled={isAiFormatting}>
                 Formatta nota
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSummarizeWithAI} disabled={isAiSummarizing}>
+                Riassumi nota
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -252,7 +277,7 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
             <TooltipTrigger asChild>
               <Button
                 onClick={handleToggleRecording}
-                disabled={isAiFormatting || isAiGenerating}
+                disabled={isBusy}
                 variant={isRecording ? 'destructive' : 'default'}
                 size="icon"
                 className="rounded-full h-12 w-12 shadow-lg"
