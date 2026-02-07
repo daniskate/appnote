@@ -28,9 +28,9 @@ const formatNoteWithAIPrompt = ai.definePrompt({
   name: 'formatNoteWithAIPrompt',
   input: {schema: FormatNoteWithAIInputSchema},
   output: {schema: FormatNoteWithAIOutputSchema},
-  prompt: `You are an AI assistant designed to format note content to improve its readability and structure.  Incorporate markdown formatting such as headers, lists, bold, and italics where appropriate to enhance the organization and clarity of the note.  The decision to use markdown should be based on your expert reasoning of the note's content.
+  prompt: `Sei un assistente AI. Il tuo compito è riformattare il contenuto della nota fornito. Devi riordinare la nota, correggere gli errori di ortografia in italiano e identificare strutture come elenchi per formattarle correttamente usando il Markdown. L'output finale deve essere ben strutturato e di facile lettura.
 
-Note Content: {{{content}}}`,
+Contenuto della nota: {{{content}}}`,
 });
 
 const formatNoteWithAIFlow = ai.defineFlow(
