@@ -9,7 +9,12 @@ import type { Note } from '@/app/types';
 import { formatNoteWithAI } from '@/ai/flows/format-note-with-ai';
 import { transcribeAudio } from '@/ai/flows/transcribe-audio';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface NoteEditorProps {
   note: Note;
@@ -150,57 +155,78 @@ export function NoteEditor({ note, onUpdate }: NoteEditorProps) {
     }
   };
   
-  const isBusy = isFormatting || isRecording || isTranscribing;
+  const isBusy = isFormatting || isTranscribing;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between pb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Editor</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleToggleRecording}
-            disabled={isFormatting || isTranscribing}
-            variant={isRecording ? 'destructive' : 'outline'}
-          >
-            {isTranscribing ? (
-              <Loader2 className="animate-spin" />
-            ) : isRecording ? (
-              <Square className="fill-current" />
-            ) : (
-              <Mic />
-            )}
-            <span>
-              {isTranscribing
-                ? 'Transcribing...'
-                : isRecording
-                ? 'Stop'
-                : 'Record'}
-            </span>
-          </Button>
-          <Button onClick={handleFormatWithAI} disabled={isBusy || !content}>
-            {isFormatting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Sparkles className="text-accent-foreground" />
-            )}
-            <span>Format with AI</span>
-          </Button>
+    <TooltipProvider>
+      <div className="relative flex h-full flex-col">
+        <div className="flex flex-1 flex-col gap-4">
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Note title"
+            className="border-none bg-transparent text-3xl font-bold h-auto p-0 focus-visible:ring-0 focus-visible:ring-offset-0 tracking-tight"
+          />
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Start writing your note here..."
+            className="h-full flex-1 resize-none border-none bg-transparent p-0 leading-7 focus-visible:ring-0 focus-visible:ring-offset-0"
+            autoFocus
+          />
+        </div>
+        <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleFormatWithAI}
+                disabled={isBusy || !content}
+                size="icon"
+                className="rounded-full h-12 w-12 shadow-lg"
+              >
+                {isFormatting ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  <Sparkles className="text-accent-foreground h-5 w-5" />
+                )}
+                <span className="sr-only">Format with AI</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Format with AI</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleToggleRecording}
+                disabled={isFormatting}
+                variant={isRecording ? 'destructive' : 'default'}
+                size="icon"
+                className="rounded-full h-12 w-12 shadow-lg"
+              >
+                {isTranscribing ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : isRecording ? (
+                  <Square className="fill-current h-5 w-5" />
+                ) : (
+                  <Mic className="h-5 w-5" />
+                )}
+                <span className="sr-only">
+                  {isTranscribing
+                    ? 'Transcribing...'
+                    : isRecording
+                    ? 'Stop Recording'
+                    : 'Start Recording'}
+                </span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isRecording ? 'Stop Recording' : 'Record Audio'}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-4">
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title"
-          className="bg-card text-2xl font-bold h-auto p-2"
-        />
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Start writing your note here..."
-          className="h-full flex-1 resize-none bg-card leading-7"
-        />
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }
