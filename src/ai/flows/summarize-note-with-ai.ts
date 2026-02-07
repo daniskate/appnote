@@ -28,7 +28,7 @@ const summarizeNoteWithAIPrompt = ai.definePrompt({
   name: 'summarizeNoteWithAIPrompt',
   input: {schema: SummarizeNoteWithAIInputSchema},
   output: {schema: SummarizeNoteWithAIOutputSchema},
-  prompt: `Sei un assistente AI. Il tuo compito è riassumere il contenuto della nota fornito. Il riassunto deve essere ben strutturato, utilizzando il Markdown per la formattazione. Usa grassetto per i titoli, crea tabelle se appropriato per organizzare i dati e includi emoji pertinenti per migliorare la leggibilità e l'impatto visivo.
+  prompt: `Sei un assistente AI. Il tuo compito è riassumere il contenuto della nota fornito. Il riassunto deve essere ben strutturato, utilizzando il Markdown per la formattazione. Usa grassetto per i titoli e includi emoji pertinenti per migliorare la leggibilità e l'impatto visivo.
 
 Contenuto della nota: {{{content}}}`,
 });
